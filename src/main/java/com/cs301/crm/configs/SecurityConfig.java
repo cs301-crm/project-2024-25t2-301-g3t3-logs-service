@@ -32,7 +32,7 @@ public class SecurityConfig {
             throws Exception {
         http.authorizeHttpRequests(auth ->
                 auth
-                        .anyRequest()
+                        .requestMatchers("/api/v1/user-logs")
                         .hasAuthority("SCOPE_ROLE_ADMIN")
         );
 
