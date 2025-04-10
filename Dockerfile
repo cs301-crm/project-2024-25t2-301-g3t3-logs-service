@@ -6,7 +6,7 @@ RUN groupadd -r spring && useradd -r -g spring spring
 
 WORKDIR /app
 
-COPY build/libs/logs-service-0.0.1-SNAPSHOT.jar logs-service.jar
+COPY build/libs/crm-0.0.1-SNAPSHOT.jar logs-service.jar
 
 # Set ownership to non-root user
 RUN chown -R spring:spring /app
