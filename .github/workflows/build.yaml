@@ -1,0 +1,92 @@
+name: Commit Stage
+
+#docker buildx build --platform linux/amd64 --tag a:test  --cache-from=type=registry,ref=a/test --cache-to=type=registry,ref=a/test,mode=max --load .
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+env:
+  VERSION: latest
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Permission for GA to get AWS OIDC connection
+      contents: read # Permission to check out current Git repo
+      security-events: write # Permission to submit security events to GitHub
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build with Gradle and run unit tests and int tests
+        run: ./gradlew build -x test
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
+      - name: Build, tag and push image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY_ID: ${{ github.repository_id }}
+        run: |
+          docker buildx build --platform linux/amd64 --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --tag $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.VERSION }}  --cache-from=type=registry,ref=$ECR_REGISTRY/$ECR_REPOSITORY:latest --cache-to=type=inline --push .
+
+      - name: Delete image if scan fails
+        if: ${{ failure() && steps.scan.outcome == 'failure' }}
+        env:
+          IMAGE_TAG: ${{ env.VERSION }}-${{ github.sha }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          # Delete both tags
+          aws ecr batch-delete-image \
+            --repository-name $ECR_REPOSITORY \
+            --image-ids imageTag=$IMAGE_TAG imageTag=${{ env.VERSION }} \
+            --region ${{ secrets.AWS_REGION }}
+          
+          echo "Vulnerability scan failed - images deleted from ECR"
+          exit 1
+
+      - name: Code vulnerability scanning
+        uses: anchore/scan-action@v6
+        id: scan # Assign identifier for curr step so that it can be referenced
+        with:
+          path: "${{ github.workspace }}" # Path to checked out repo
+          fail-build: false # Fail if found vulnerabilities
+          severity-cutoff: 'high'
+
+      - name: Upload vulnerability report
+        uses: github/codeql-action/upload-sarif@v3
+        if: success() || failure()
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }}
+
+      - name: Inspect action SARIF report
+        run: cat ${{ steps.scan.outputs.sarif }}
