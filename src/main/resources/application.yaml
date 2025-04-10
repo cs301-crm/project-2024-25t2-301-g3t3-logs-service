@@ -1,0 +1,23 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: logs-service
+  data:
+    mongodb:
+      uri: ${SPRING_DATASOURCE_URL:mongodb://localhost:27017/logs}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER:http://localhost:8080/api/v1/auth}
+          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8080/api/v1/auth/.well-known/jwks.json}
+  kafka:
+    consumer:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      properties:
+        schema.registry.url: ${KAFKA_REGISTRY:http://127.0.0.1:8000}
+
+cors:
+  origin: ${CORS_ORIGIN:http://localhost:3000}
