@@ -10,16 +10,6 @@ import java.time.ZonedDateTime;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
-
-    @ExceptionHandler(value = {Exception.class})
-    public ResponseEntity<ErrorResponse> handleException() {
-        return new ResponseEntity<>(
-                new ErrorResponse(false,"Something went wrong on our end. Try again.",
-                        HttpStatus.SERVICE_UNAVAILABLE,
-                        ZonedDateTime.now()
-                ), HttpStatus.SERVICE_UNAVAILABLE);
-    }
-
     @ExceptionHandler(value = {MethodArgumentTypeMismatchException.class})
     public ResponseEntity<ErrorResponse> handleInvalidPageParameters() {
         return new ResponseEntity<>(
