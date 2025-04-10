@@ -6,7 +6,9 @@ spring:
     name: logs-service
   data:
     mongodb:
-      uri: ${SPRING_DATASOURCE_URL:mongodb://localhost:27017/logs}
+      uri: ${SPRING_DATASOURCE_URL:mongodb://root:password@localhost:27017}
+      database: ${SPRING_DATASOURCE_DATABASE:logs}
+      authentication-database: admin
   security:
     oauth2:
       resourceserver:
