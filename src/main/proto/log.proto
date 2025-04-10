@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package com.cs301.shared;
+
+option java_multiple_files = true;
+option java_package = "com.cs301.shared.protobuf";
+
+// Represents a log message that captures information about a business transaction.
+message Log {
+
+  // Unique identifier for the log message, typically a UUID.
+  // Type: string (UUID in string format)
+  // Example: "123e4567-e89b-12d3-a456-426614174000"
+  string log_id = 1;
+
+  // Unique username of the actor who performed the transaction.
+  // Type: string (Username associated with the actor)
+  // Example: "john_doe"
+  string actor = 2;
+
+  // The HTTP method of the transaction (e.g., "GET", "POST".).
+  // Is converted to human-readable language by a Lambda.
+  // Type: string (Descriptive text of the transaction)
+  string transaction_type = 3;
+
+  // The method name called for the transaction.
+  // Is converted to human-readable language by a Lambda.
+  // Type: string (Descriptive text of the transaction)
+  string action = 4;
+
+  // Timestamp of when the transaction occurred, in ISO 8601 format (UTC).
+  // Type: string (ISO 8601 format), created by Instant class in Java
+  // Example: "2021-03-11T22:04:16.000Z"
+  string timestamp = 5;
+}

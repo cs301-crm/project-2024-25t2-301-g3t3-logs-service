@@ -1,0 +1,4 @@
+{
+  "schemaType": "PROTOBUF",
+  "schema": "syntax = \"proto3\";\n\npackage com.cs301.shared;\n\noption java_multiple_files = true;\noption java_package = \"com.cs301.shared.protobuf\";\n\nmessage Log {\n  string log_id = 1;\n  string actor = 2;\n  string transaction_type = 3;\n  string action = 4;\n  string timestamp = 5;\n}"
+}
