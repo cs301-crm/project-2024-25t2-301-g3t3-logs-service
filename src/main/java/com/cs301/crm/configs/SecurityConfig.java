@@ -32,10 +32,23 @@ public class SecurityConfig {
             throws Exception {
         http.authorizeHttpRequests(auth ->
                 auth
+                        .requestMatchers(
+                                "/v2/api-docs",
+                                "/swagger-resources/configuration/ui",
+                                "/swagger-resources",
+                                "/swagger-resources/configuration/security",
+                                "/swagger-ui.html",
+                                "/webjars/**",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/configuration/**",
+                                "/swagger*/**",
+                                "/actuator/**"
+                        ).permitAll()
                         .requestMatchers("/api/v1/user-logs")
                         .hasAuthority("SCOPE_ROLE_ADMIN")
                         .anyRequest()
-                        .permitAll()
+                        .authenticated()
         );
 
         http.sessionManagement(session ->
