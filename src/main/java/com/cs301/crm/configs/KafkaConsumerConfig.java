@@ -26,7 +26,7 @@ public class KafkaConsumerConfig {
     @Value("${spring.kafka.consumer.properties.schema.registry.url}")
     private String schemaRegistryUrl;
 
-    @Value("{spring.kafka.consumer.schema.log}")
+    @Value("${spring.kafka.consumer.schema.log}")
     private String protobufLogSchema;
 
     @Bean
