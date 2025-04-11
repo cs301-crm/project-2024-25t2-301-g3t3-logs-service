@@ -34,6 +34,8 @@ public class SecurityConfig {
                 auth
                         .requestMatchers("/api/v1/user-logs")
                         .hasAuthority("SCOPE_ROLE_ADMIN")
+                        .anyRequest()
+                        .permitAll()
         );
 
         http.sessionManagement(session ->
