@@ -1,7 +1,5 @@
 name: Commit Stage
 
-#docker buildx build --platform linux/amd64 --tag a:test  --cache-from=type=registry,ref=a/test --cache-to=type=registry,ref=a/test,mode=max --load .
-
 on:
   push:
     branches: ["main", "prod"]
@@ -40,7 +38,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Build with Gradle and run unit tests and int tests
-        run: ./gradlew build -x test
+        run: chmod +x ./gradlew && ./gradlew build -x test
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -51,25 +49,71 @@ jobs:
         with:
           driver: docker-container
 
+      - name: Set branch-specific variables
+        id: set-vars
+        run: |
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          echo "Branch name is: $BRANCH_NAME"
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          
+          # Default tags
+          TAGS="$ECR_REPOSITORY:${{ github.sha }} $ECR_REPOSITORY:${{ env.VERSION }}"
+          
+          # Add prod tag if on prod branch
+          if [[ "$BRANCH_NAME" == "prod" ]]; then
+            echo "Running in production branch"
+            TAGS="$TAGS $ECR_REPOSITORY:prod"
+          else
+            echo "Running in non-production branch"
+          fi
+          
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+
       - name: Build, tag and push image
         env:
-          IMAGE_TAG: ${{ github.sha }}
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY_ID: ${{ github.repository_id }}
+          BRANCH: ${{ steps.set-vars.outputs.branch }}
         run: |
-          docker buildx build --platform linux/amd64 --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --tag $ECR_REGISTRY/$ECR_REPOSITORY:${{ env.VERSION }}  --cache-from=type=registry,ref=$ECR_REGISTRY/$ECR_REPOSITORY:latest --cache-to=type=inline --push .
+          echo "Building from branch: $BRANCH"
+          
+          # Create tag arguments for Docker build
+          TAG_ARGS=""
+          for TAG in ${{ steps.set-vars.outputs.tags }}; do
+            TAG_ARGS="$TAG_ARGS --tag $ECR_REGISTRY/$TAG"
+          done
+          
+          echo "Using tags: $TAG_ARGS"
+          
+          # Build and push with all tags
+          docker buildx build --platform linux/amd64 $TAG_ARGS --cache-from=type=registry,ref=$ECR_REGISTRY/$ECR_REPOSITORY:latest --cache-to=type=inline --push .
 
       - name: Delete image if scan fails
         if: ${{ failure() && steps.scan.outcome == 'failure' }}
         env:
-          IMAGE_TAG: ${{ env.VERSION }}-${{ github.sha }}
+          IMAGE_TAG: ${{ github.sha }}
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          BRANCH: ${{ steps.set-vars.outputs.branch }}
         run: |
-          # Delete both tags
+          # Delete the SHA tag
           aws ecr batch-delete-image \
             --repository-name $ECR_REPOSITORY \
-            --image-ids imageTag=$IMAGE_TAG imageTag=${{ env.VERSION }} \
+            --image-ids imageTag=$IMAGE_TAG \
             --region ${{ secrets.AWS_REGION }}
+          
+          # Delete the "latest" tag
+          aws ecr batch-delete-image \
+            --repository-name $ECR_REPOSITORY \
+            --image-ids imageTag=${{ env.VERSION }} \
+            --region ${{ secrets.AWS_REGION }}
+          
+          # Delete the "prod" tag if on prod branch
+          if [[ "$BRANCH" == "prod" ]]; then
+            aws ecr batch-delete-image \
+              --repository-name $ECR_REPOSITORY \
+              --image-ids imageTag=prod \
+              --region ${{ secrets.AWS_REGION }}
+          fi
           
           echo "Vulnerability scan failed - images deleted from ECR"
           exit 1
