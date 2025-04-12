@@ -6,7 +6,8 @@ spring:
     name: logs-service
   data:
     mongodb:
-      uri: mongodb://${SPRING_DATASOURCE_USERNAME:root}:${SPRING_DATASOURCE_PASSWORD:password}@${SPRING_DATASOURCE_HOST:localhost}:${SPRING_DATASOURCE_PORT:27017}/${SPRING_DATASOURCE_DATABASE:logs}?tls=true&tlsCAFile=/etc/ssl/certs/global-bundle.pem&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false
+      uri: mongodb://${SPRING_DATASOURCE_USERNAME:root}:${SPRING_DATASOURCE_PASSWORD:password}@${SPRING_DATASOURCE_HOST:localhost}:${SPRING_DATASOURCE_PORT:27017}/?ssl=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false
+      database: ${SPRING_DATASOURCE_DATABASE:logs}
   security:
     oauth2:
       resourceserver:
