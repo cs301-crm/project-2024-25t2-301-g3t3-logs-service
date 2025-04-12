@@ -1,17 +1,28 @@
 FROM eclipse-temurin:17-jre-jammy
 
-# Install curl and keytool (keytool is already in JRE, curl needed for healthcheck + cert download)
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# Install wget and other required tools
+RUN apt-get update && apt-get install -y wget openssl && rm -rf /var/lib/apt/lists/*
 
-# Download DocumentDB global CA cert
-RUN curl -o /tmp/global-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+# Create the certs directory
+RUN mkdir -p /tmp/certs/
 
-# Import the CA cert into Java's default truststore
-RUN keytool -import -trustcacerts -alias documentdb-root-ca \
-    -file /tmp/global-bundle.pem \
-    -keystore /opt/java/openjdk/lib/security/cacerts \
-    -storepass changeit -noprompt
+# Download the DocumentDB global bundle using wget
+RUN wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -O /tmp/certs/global-bundle.pem
 
+# Split the bundle into individual certs
+RUN awk 'split_after == 1 {n++;split_after=0} /-----END CERTIFICATE-----/ {split_after=1}{print > "/tmp/certs/docdb-ca-" n ".pem"}' < /tmp/certs/global-bundle.pem
+
+# Import each certificate into a custom truststore with password "password"
+RUN \
+  TRUSTSTORE=/tmp/certs/docdb-truststore.jks && \
+  STOREPASS=password && \
+  for CERT in /tmp/certs/docdb-ca-*; do \
+    ALIAS=$(openssl x509 -noout -subject -in $CERT | sed -n 's/.*CN=//p' | tr -d ' /') || true; \
+    if [ -z "$ALIAS" ]; then ALIAS=$(basename $CERT .pem); fi; \
+    echo "Importing $ALIAS from $CERT" && \
+    keytool -import -file $CERT -alias "$ALIAS" -storepass $STOREPASS -keystore $TRUSTSTORE -noprompt; \
+  done && \
+  rm -rf /tmp/certs/docdb-ca-*.pem
 
 # Add non-root user
 RUN groupadd -r spring && useradd -r -g spring spring
@@ -30,4 +41,4 @@ EXPOSE 8082
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
     CMD curl -f http://localhost:8082/actuator/health || exit 1
 
-ENTRYPOINT ["java", "-jar", "logs-service.jar"]
+ENTRYPOINT ["java", "-Djavax.net.ssl.trustStore=/tmp/certs/docdb-truststore.jks", "-Djavax.net.ssl.trustStorePassword=password", "-jar", "logs-service.jar"]
