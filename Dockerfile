@@ -9,8 +9,9 @@ RUN curl -o /tmp/global-bundle.pem https://truststore.pki.rds.amazonaws.com/glob
 # Import the CA cert into Java's default truststore
 RUN keytool -import -trustcacerts -alias documentdb-root-ca \
     -file /tmp/global-bundle.pem \
-    -keystore /usr/lib/jvm/temurin-17-jre/lib/security/cacerts \
+    -keystore /opt/java/openjdk/lib/security/cacerts \
     -storepass changeit -noprompt
+
 
 # Add non-root user
 RUN groupadd -r spring && useradd -r -g spring spring
