@@ -21,8 +21,6 @@ spring:
         log: ${KAFKA_LOG_SCHEMA:log}
       properties:
         schema.registry.url: ${KAFKA_REGISTRY:http://127.0.0.1:8000}
-        security.protocol: SSL
-        ssl.truststore.location: /etc/ssl/certs/global-bundle.pem
 
 cors:
   origin: ${CORS_ORIGIN:http://localhost:3000}
