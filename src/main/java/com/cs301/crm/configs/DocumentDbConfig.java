@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 public class DocumentDbConfig {
     private MongoProperties properties;
 
-    public static final String KEY_STORE_PATH = "/tmp/certs/rds-truststore.jks";
+    public static final String KEY_STORE_PATH = "/app/certs/rds-truststore.jks";
     public static final String TRUST_STORE_PASSWORD = "password";
 
     public DocumentDbConfig(final MongoProperties properties) {
