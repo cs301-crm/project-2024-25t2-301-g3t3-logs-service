@@ -20,5 +20,8 @@ spring:
       schema:
         log: ${KAFKA_LOG_SCHEMA:log}
 
+aws:
+  registry: ${KAFKA_REGISTRY:localhost:8000}
+
 cors:
   origin: ${CORS_ORIGIN:http://localhost:3000}
