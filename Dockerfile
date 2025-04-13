@@ -10,7 +10,7 @@ RUN mkdir -p /app/certs/
 RUN wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -O /app/certs/global-bundle.pem
 
 # Split the bundle into individual certs
-RUN awk 'split_after == 1 {n++;split_after=0} /-----END CERTIFICATE-----/ {split_after=1}{print > "/tmp/certs/docdb-ca-" n ".pem"}' < /tmp/certs/global-bundle.pem
+RUN awk 'split_after == 1 {n++;split_after=0} /-----END CERTIFICATE-----/ {split_after=1}{print > "/app/certs/docdb-ca-" n ".pem"}' < /app/certs/global-bundle.pem
 
 # Import each certificate into a custom truststore with password "password"
 RUN \
