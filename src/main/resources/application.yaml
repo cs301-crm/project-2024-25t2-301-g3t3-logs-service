@@ -17,8 +17,6 @@ spring:
   kafka:
     consumer:
       bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
-      schema:
-        log: ${KAFKA_LOG_SCHEMA:log}
       properties:
         schema.registry.url: ${KAFKA_REGISTRY:http://127.0.0.1:8000}
 

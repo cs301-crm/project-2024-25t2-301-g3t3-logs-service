@@ -26,11 +26,8 @@ public class KafkaConsumerConfig {
     @Value("${spring.kafka.consumer.bootstrap-servers}")
     private String bootstrapAddress;
 
-    @Value("${aws.registry}")
+    @Value("${spring.kafka.consumer.properties.schema.registry.url}")
     private String schemaRegistryUrl;
-
-    @Value("${spring.kafka.consumer.schema.log}")
-    private String protobufLogSchema;
 
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
