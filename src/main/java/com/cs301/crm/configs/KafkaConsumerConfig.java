@@ -3,6 +3,7 @@ package com.cs301.crm.configs;
 import com.amazonaws.services.schemaregistry.deserializers.GlueSchemaRegistryKafkaDeserializer;
 import com.amazonaws.services.schemaregistry.utils.AWSSchemaRegistryConstants;
 import com.amazonaws.services.schemaregistry.utils.ProtobufMessageType;
+import com.cs301.shared.protobuf.Log;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -37,20 +38,20 @@ public class KafkaConsumerConfig {
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "log-group");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-//        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaProtobufDeserializer.class.getName());
-        props.put("schema.registry.url", "https://glue.ap-southeast-1.amazonaws.com");
-//        props.put("specific.protobuf.value.type", Log.class.getName());
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaProtobufDeserializer.class.getName());
+        props.put("schema.registry.url", schemaRegistryUrl);
+        props.put("specific.protobuf.value.type", Log.class.getName());
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
 
         // prod
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, GlueSchemaRegistryKafkaDeserializer.class.getName());
-        props.put(AWSSchemaRegistryConstants.AWS_REGION, Region.AP_SOUTHEAST_1);
-        props.put(AWSSchemaRegistryConstants.DATA_FORMAT, DataFormat.PROTOBUF.name());
-        props.put(AWSSchemaRegistryConstants.REGISTRY_NAME, schemaRegistryUrl);
-        props.put(AWSSchemaRegistryConstants.SCHEMA_NAME, protobufLogSchema);
-        props.put(AWSSchemaRegistryConstants.PROTOBUF_MESSAGE_TYPE, ProtobufMessageType.POJO.getName());
-        props.put(AWSSchemaRegistryConstants.SECONDARY_DESERIALIZER, KafkaProtobufDeserializer.class.getName());
+//        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, GlueSchemaRegistryKafkaDeserializer.class.getName());
+//        props.put(AWSSchemaRegistryConstants.AWS_REGION, Region.AP_SOUTHEAST_1);
+//        props.put(AWSSchemaRegistryConstants.DATA_FORMAT, DataFormat.PROTOBUF.name());
+//        props.put(AWSSchemaRegistryConstants.REGISTRY_NAME, schemaRegistryUrl);
+//        props.put(AWSSchemaRegistryConstants.SCHEMA_NAME, protobufLogSchema);
+//        props.put(AWSSchemaRegistryConstants.PROTOBUF_MESSAGE_TYPE, ProtobufMessageType.POJO.getName());
+//        props.put(AWSSchemaRegistryConstants.SECONDARY_DESERIALIZER, KafkaProtobufDeserializer.class.getName());
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
