@@ -4,30 +4,30 @@ FROM eclipse-temurin:17-jre-jammy
 RUN apt-get update && apt-get install -y wget openssl && rm -rf /var/lib/apt/lists/*
 
 # Create the certs directory
-RUN mkdir -p /tmp/certs/
+RUN mkdir -p /app/certs/
 
 # Download the DocumentDB global bundle using wget
-RUN wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -O /tmp/certs/global-bundle.pem
+RUN wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -O /app/certs/global-bundle.pem
 
 # Split the bundle into individual certs
 RUN awk 'split_after == 1 {n++;split_after=0} /-----END CERTIFICATE-----/ {split_after=1}{print > "/tmp/certs/docdb-ca-" n ".pem"}' < /tmp/certs/global-bundle.pem
 
 # Import each certificate into a custom truststore with password "password"
 RUN \
-  TRUSTSTORE=/tmp/certs/docdb-truststore.jks && \
+  TRUSTSTORE=/app/certs/docdb-truststore.jks && \
   STOREPASS=password && \
-  for CERT in /tmp/certs/docdb-ca-*; do \
+  for CERT in /app/certs/docdb-ca-*; do \
     ALIAS=$(openssl x509 -noout -subject -in $CERT | sed -n 's/.*CN=//p' | tr -d ' /') || true; \
     if [ -z "$ALIAS" ]; then ALIAS=$(basename $CERT .pem); fi; \
     echo "Importing $ALIAS from $CERT" && \
     keytool -import -file $CERT -alias "$ALIAS" -storepass $STOREPASS -keystore $TRUSTSTORE -noprompt; \
   done && \
-  rm -rf /tmp/certs/docdb-ca-*.pem
+  rm -rf /app/certs/docdb-ca-*.pem
 
 
 # Move truststore to a persistent location
 RUN mkdir -p /app/certs && \
-    mv /tmp/certs/docdb-truststore.jks /app/certs/
+    mv /app/certs/docdb-truststore.jks /app/certs/
 
 
 # Add non-root user
