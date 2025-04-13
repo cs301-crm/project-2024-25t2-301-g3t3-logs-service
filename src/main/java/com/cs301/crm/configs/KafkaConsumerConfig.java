@@ -2,6 +2,7 @@ package com.cs301.crm.configs;
 
 import com.amazonaws.services.schemaregistry.deserializers.GlueSchemaRegistryKafkaDeserializer;
 import com.amazonaws.services.schemaregistry.utils.AWSSchemaRegistryConstants;
+import com.amazonaws.services.schemaregistry.utils.ProtobufMessageType;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +48,7 @@ public class KafkaConsumerConfig {
         props.put(AWSSchemaRegistryConstants.DATA_FORMAT, DataFormat.PROTOBUF.name());
         props.put(AWSSchemaRegistryConstants.REGISTRY_NAME, schemaRegistryUrl);
         props.put(AWSSchemaRegistryConstants.SCHEMA_NAME, protobufLogSchema);
+        props.put(AWSSchemaRegistryConstants.PROTOBUF_MESSAGE_TYPE, ProtobufMessageType.POJO.getName());
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
